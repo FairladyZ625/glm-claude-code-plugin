@@ -104,13 +104,10 @@ function resolveGlmEnv() {
 
 function childEnv() {
   const { baseUrl, authToken } = resolveGlmEnv();
-  const env = {
-    ...process.env,
-    ANTHROPIC_BASE_URL: baseUrl,
-    ANTHROPIC_AUTH_TOKEN: authToken,
-  };
+  const env = { ...process.env };
 
   for (const key of [
+    "ANTHROPIC_API_KEY",
     "HTTP_PROXY",
     "HTTPS_PROXY",
     "ALL_PROXY",
@@ -122,6 +119,9 @@ function childEnv() {
   ]) {
     delete env[key];
   }
+
+  env.ANTHROPIC_BASE_URL = baseUrl;
+  env.ANTHROPIC_AUTH_TOKEN = authToken;
 
   return env;
 }
@@ -215,7 +215,7 @@ function buildClaudeArgs(task, write) {
     "--allowed-tools",
     ...tools,
     "--permission-mode",
-    write ? "acceptEdits" : "default",
+    write ? "bypassPermissions" : "default",
     "--output-format",
     "stream-json",
     "--verbose",
@@ -361,16 +361,17 @@ function startBackground(job) {
 
 function handleRun(argv) {
   const { options, positional } = splitArgs(argv, {
-    bools: ["background", "wait", "write"],
+    bools: ["background", "wait", "write", "read-only"],
     values: ["cwd"],
   });
   if (options.background && options.wait) fail("choose either --background or --wait");
+  if (options.write && options["read-only"]) fail("choose either --write or --read-only");
 
   const task = taskFromArgs(positional);
   if (!task) fail("missing task");
 
   const cwd = path.resolve(options.cwd || process.cwd());
-  const job = createJob({ task, write: Boolean(options.write), cwd });
+  const job = createJob({ task, write: !options["read-only"], cwd });
 
   if (options.background) {
     startBackground(job);
@@ -468,6 +469,8 @@ function handleSetup() {
   process.stdout.write(`claude: ${claude.available ? `ok (${claude.output})` : `missing (${claude.error})`}\n`);
   process.stdout.write(`env:    ${envStatus.ok ? "ok (ANTHROPIC_GLM_BASE_URL + token found)" : `missing (${envStatus.error})`}\n`);
   process.stdout.write(`model:  ${process.env.GLM_SCALE_MODEL || DEFAULT_MODEL}\n`);
+  process.stdout.write(`default permissions: write + bypassPermissions\n`);
+  process.stdout.write(`ANTHROPIC_API_KEY in parent env: ${process.env.ANTHROPIC_API_KEY ? "set (stripped for GLM child)" : "not set"}\n`);
   process.stdout.write(`jobs:   ${STATE_DIR}\n`);
 }
 
@@ -476,7 +479,7 @@ function printHelp() {
 
 Usage:
   node glm-companion.mjs setup
-  node glm-companion.mjs run [--wait|--background] [--write] [--cwd <dir>] "<task>"
+  node glm-companion.mjs run [--wait|--background] [--read-only] [--cwd <dir>] "<task>"
   node glm-companion.mjs status [job-id] [--all] [--json]
   node glm-companion.mjs result [job-id]
   node glm-companion.mjs cancel [job-id]
@@ -485,8 +488,12 @@ Environment is loaded from the current process, then ~/.zshrc fallback:
   ANTHROPIC_GLM_BASE_URL
   ANTHROPIC_GLM_AUTH_TOKEN or GLM_API_KEY
 
+Default permissions:
+  Full write access with --permission-mode bypassPermissions.
+  Pass --read-only to restrict to Read/Grep/Glob/Bash(git:*).
+
 Compatibility:
-  node glm-companion.mjs [--write] "<task>" is treated as: run --wait [--write] "<task>"
+  node glm-companion.mjs "<task>" is treated as: run --wait "<task>"
 `);
 }
 
@@ -508,9 +515,7 @@ function main() {
   if (cmd === "cancel") return handleCancel(rest);
 
   // Backward-compatible direct task mode.
-  return handleRun(process.argv.slice(2).includes("--write")
-    ? ["--wait", ...process.argv.slice(2)]
-    : ["--wait", ...process.argv.slice(2)]);
+  return handleRun(["--wait", ...process.argv.slice(2)]);
 }
 
 main();

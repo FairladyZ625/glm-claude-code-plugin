@@ -25,6 +25,8 @@ export GLM_API_KEY="..."
 
 The plugin maps those variables to `ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN` only for the child Claude process.
 
+If your normal shell also has `ANTHROPIC_API_KEY`, the plugin strips it from the child process so Claude Code does not accidentally send your Anthropic key to the GLM endpoint.
+
 ## Install Locally
 
 From Claude Code:
@@ -46,13 +48,16 @@ claude --plugin-dir /Users/lizeyu/Projects/glm-claude-code-plugin/plugins/glm
 ```text
 /glm:setup
 /glm:run inspect src/foo.ts and explain the bug
-/glm:run --write fix src/foo.ts and run the relevant test
+/glm:run fix src/foo.ts and run the relevant test
+/glm:run --read-only inspect src/foo.ts without modifying files
 /glm:status
 /glm:result <job-id>
 /glm:cancel <job-id>
 ```
 
 `/glm:run` defaults to Claude Code Bash background mode. The Bash task stays alive until GLM finishes, so Claude Code can notify the conversation when the delegated work completes.
+
+`/glm:run` also defaults to full write access: the child Claude process runs with `--permission-mode bypassPermissions` and the `Read`, `Grep`, `Glob`, `Edit`, `Write`, and `Bash` tools. Use `--read-only` when you want to restrict a task to `Read`, `Grep`, `Glob`, and `Bash(git:*)`.
 
 For detached jobs that return a job id immediately:
 
