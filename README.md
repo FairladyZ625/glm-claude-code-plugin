@@ -14,7 +14,7 @@ It follows the same basic shape as delegation plugins such as OpenAI Codex for C
 
 - Claude Code CLI available as `claude`
 - Node.js
-- GLM Anthropic-compatible environment in `~/.zshrc` or the current shell:
+- GLM Anthropic-compatible environment in `~/.zshenv` or the current shell. `~/.zshenv` is recommended because non-interactive zsh reads it automatically:
 
 ```sh
 export ANTHROPIC_GLM_BASE_URL="https://open.bigmodel.cn/api/anthropic"
@@ -58,6 +58,12 @@ claude --plugin-dir /Users/lizeyu/Projects/glm-claude-code-plugin/plugins/glm
 `/glm:run` defaults to Claude Code Bash background mode. The Bash task stays alive until GLM finishes, so Claude Code can notify the conversation when the delegated work completes.
 
 `/glm:run` also defaults to full write access: the child Claude process runs with `--permission-mode bypassPermissions` and the `Read`, `Grep`, `Glob`, `Edit`, `Write`, and `Bash` tools. Use `--read-only` when you want to restrict a task to `Read`, `Grep`, `Glob`, and `Bash(git:*)`.
+
+`/glm:setup` prints the resolved token source plus a redacted tail and short sha256 fingerprint. Use it to diagnose 401s without exposing secrets:
+
+```text
+resolved token source: zshrc:ANTHROPIC_GLM_AUTH_TOKEN (set tail=xxxxxx sha256=...)
+```
 
 For detached jobs that return a job id immediately:
 

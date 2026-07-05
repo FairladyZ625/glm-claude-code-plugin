@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn, execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -69,6 +70,13 @@ function firstEnv(names, env = process.env) {
   return "";
 }
 
+function tokenLabel(value) {
+  if (!value) return "missing";
+  const tail = value.slice(-6);
+  const hash = crypto.createHash("sha256").update(value).digest("hex").slice(0, 10);
+  return `set tail=${tail} sha256=${hash}`;
+}
+
 function loadZshGlmEnv() {
   try {
     const out = execFileSync(
@@ -80,26 +88,38 @@ function loadZshGlmEnv() {
       { encoding: "buffer", timeout: 8000 }
     );
     const [baseUrl = "", authToken = "", apiKey = ""] = out.toString("utf8").split("\0");
-    return { baseUrl, authToken: authToken || apiKey };
+    return {
+      baseUrl,
+      authToken: authToken || apiKey,
+      authTokenRaw: authToken,
+      apiKeyRaw: apiKey,
+    };
   } catch {
-    return { baseUrl: "", authToken: "" };
+    return { baseUrl: "", authToken: "", authTokenRaw: "", apiKeyRaw: "" };
   }
 }
 
 function resolveGlmEnv() {
-  let baseUrl = firstEnv(["ANTHROPIC_GLM_BASE_URL"]);
-  let authToken = firstEnv(["ANTHROPIC_GLM_AUTH_TOKEN", "GLM_API_KEY"]);
+  const processBaseUrl = firstEnv(["ANTHROPIC_GLM_BASE_URL"]);
+  const processAuthToken = firstEnv(["ANTHROPIC_GLM_AUTH_TOKEN"]);
+  const processApiKey = firstEnv(["GLM_API_KEY"]);
+  let baseUrl = processBaseUrl;
+  let authToken = processAuthToken || processApiKey;
+  let source = processAuthToken ? "process:ANTHROPIC_GLM_AUTH_TOKEN" : processApiKey ? "process:GLM_API_KEY" : null;
 
   if (!baseUrl || !authToken) {
     const zshEnv = loadZshGlmEnv();
     baseUrl ||= zshEnv.baseUrl;
-    authToken ||= zshEnv.authToken;
+    if (!authToken && zshEnv.authToken) {
+      authToken = zshEnv.authToken;
+      source = zshEnv.authTokenRaw ? "zshrc:ANTHROPIC_GLM_AUTH_TOKEN" : "zshrc:GLM_API_KEY";
+    }
   }
 
   if (!baseUrl) fail("missing GLM base URL env: set ANTHROPIC_GLM_BASE_URL in ~/.zshrc");
   if (!authToken) fail("missing GLM auth env: set ANTHROPIC_GLM_AUTH_TOKEN or GLM_API_KEY in ~/.zshrc");
 
-  return { baseUrl, authToken };
+  return { baseUrl, authToken, source: source || "unknown" };
 }
 
 function childEnv() {
@@ -457,17 +477,26 @@ function handleSetup() {
   const node = commandAvailable(process.execPath, ["--version"]);
   const claude = commandAvailable(claudeBin, ["--version"]);
   let envStatus;
+  let resolved = null;
   try {
-    resolveGlmEnv();
+    resolved = resolveGlmEnv();
     envStatus = { ok: true };
   } catch (error) {
     envStatus = { ok: false, error: error.message };
   }
+  const zshEnv = loadZshGlmEnv();
 
   process.stdout.write(`GLM Claude plugin setup\n\n`);
   process.stdout.write(`node:   ${node.available ? `ok (${node.output})` : `missing (${node.error})`}\n`);
   process.stdout.write(`claude: ${claude.available ? `ok (${claude.output})` : `missing (${claude.error})`}\n`);
   process.stdout.write(`env:    ${envStatus.ok ? "ok (ANTHROPIC_GLM_BASE_URL + token found)" : `missing (${envStatus.error})`}\n`);
+  if (resolved) {
+    process.stdout.write(`resolved token source: ${resolved.source} (${tokenLabel(resolved.authToken)})\n`);
+  }
+  process.stdout.write(`process ANTHROPIC_GLM_AUTH_TOKEN: ${tokenLabel(process.env.ANTHROPIC_GLM_AUTH_TOKEN)}\n`);
+  process.stdout.write(`process GLM_API_KEY: ${tokenLabel(process.env.GLM_API_KEY)}\n`);
+  process.stdout.write(`zshrc ANTHROPIC_GLM_AUTH_TOKEN: ${tokenLabel(zshEnv.authTokenRaw)}\n`);
+  process.stdout.write(`zshrc GLM_API_KEY: ${tokenLabel(zshEnv.apiKeyRaw)}\n`);
   process.stdout.write(`model:  ${process.env.GLM_SCALE_MODEL || DEFAULT_MODEL}\n`);
   process.stdout.write(`default permissions: write + bypassPermissions\n`);
   process.stdout.write(`ANTHROPIC_API_KEY in parent env: ${process.env.ANTHROPIC_API_KEY ? "set (stripped for GLM child)" : "not set"}\n`);
