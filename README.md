@@ -25,7 +25,7 @@ export GLM_API_KEY="..."
 
 The plugin maps those variables to `ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN` only for the child Claude process.
 
-If your normal shell also has `ANTHROPIC_API_KEY`, the plugin strips it from the child process so Claude Code does not accidentally send your Anthropic key to the GLM endpoint.
+If your normal shell also has `ANTHROPIC_API_KEY`, the plugin replaces it for the child process with the GLM token. The child `claude` is launched with `--bare` so it does not read Claude.ai OAuth/keychain credentials.
 
 ## Install Locally
 
