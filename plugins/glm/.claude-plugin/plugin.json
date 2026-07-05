@@ -1,5 +1,6 @@
 {
   "name": "glm",
+  "version": "0.1.0",
   "description": "Delegate tasks from Claude Code to a separate Claude subprocess backed by GLM-5.2[1m]. Includes run, status, result, cancel, and setup commands.",
   "author": {
     "name": "local"
