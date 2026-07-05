@@ -1,0 +1,17 @@
+{
+  "name": "glm",
+  "description": "Delegate tasks from Claude Code to a separate Claude subprocess backed by GLM-5.2[1m]. Includes run, status, result, cancel, and setup commands.",
+  "author": {
+    "name": "local"
+  },
+  "homepage": "https://github.com/local/glm-claude-code-plugin",
+  "repository": "https://github.com/local/glm-claude-code-plugin",
+  "license": "MIT",
+  "keywords": [
+    "glm",
+    "claude-code",
+    "delegation",
+    "background-agent",
+    "subprocess"
+  ]
+}

@@ -1,0 +1,81 @@
+# GLM Claude Code Plugin
+
+Claude Code plugin for delegating work to a separate Claude subprocess backed by `GLM-5.2[1m]`.
+
+It follows the same basic shape as delegation plugins such as OpenAI Codex for Claude Code:
+
+- `/glm:run` starts a GLM-backed Claude subprocess.
+- `/glm:status` shows running and recent jobs.
+- `/glm:result` prints stored final output.
+- `/glm:cancel` cancels a running job.
+- `/glm:setup` checks local runtime and GLM environment.
+
+## Requirements
+
+- Claude Code CLI available as `claude`
+- Node.js
+- GLM Anthropic-compatible environment in `~/.zshrc` or the current shell:
+
+```sh
+export ANTHROPIC_GLM_BASE_URL="https://open.bigmodel.cn/api/anthropic"
+export ANTHROPIC_GLM_AUTH_TOKEN="..."
+# or token fallback:
+export GLM_API_KEY="..."
+```
+
+The plugin maps those variables to `ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN` only for the child Claude process.
+
+## Install Locally
+
+From Claude Code:
+
+```text
+/plugin marketplace add /Users/lizeyu/Projects/glm-claude-code-plugin
+/plugin install glm@glm-claude
+/reload-plugins
+```
+
+For development without installing:
+
+```sh
+claude --plugin-dir /Users/lizeyu/Projects/glm-claude-code-plugin/plugins/glm
+```
+
+## Usage
+
+```text
+/glm:setup
+/glm:run inspect src/foo.ts and explain the bug
+/glm:run --write fix src/foo.ts and run the relevant test
+/glm:status
+/glm:result <job-id>
+/glm:cancel <job-id>
+```
+
+`/glm:run` defaults to Claude Code Bash background mode. The Bash task stays alive until GLM finishes, so Claude Code can notify the conversation when the delegated work completes.
+
+For detached jobs that return a job id immediately:
+
+```text
+/glm:run --detached inspect the repo and report risks
+```
+
+## Job Files
+
+Jobs are stored under:
+
+```text
+~/.claude/glm-scale/jobs/<job-id>/
+```
+
+Each job includes:
+
+- `job.json`: metadata
+- `task.txt`: delegated prompt
+- `progress.log`: readable timeline
+- `events.jsonl`: raw Claude `stream-json` events
+- `result.md`: final GLM result
+
+## License
+
+MIT

@@ -1,0 +1,21 @@
+{
+  "name": "glm-claude",
+  "owner": {
+    "name": "local"
+  },
+  "metadata": {
+    "description": "Claude Code plugin for delegating work to a GLM-backed Claude subprocess.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "glm",
+      "description": "Delegate tasks to Claude Code running with GLM-5.2[1m].",
+      "version": "0.1.0",
+      "author": {
+        "name": "local"
+      },
+      "source": "./plugins/glm"
+    }
+  ]
+}

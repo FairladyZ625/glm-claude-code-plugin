@@ -1,0 +1,15 @@
+{
+  "name": "glm-claude-code-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Claude Code plugin for delegating work to GLM-5.2[1m].",
+  "license": "MIT",
+  "scripts": {
+    "check": "node --check plugins/glm/scripts/glm-companion.mjs",
+    "setup": "node plugins/glm/scripts/glm-companion.mjs setup"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
