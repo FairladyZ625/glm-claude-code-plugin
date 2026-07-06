@@ -65,6 +65,24 @@ claude --plugin-dir /Users/lizeyu/Projects/glm-claude-code-plugin/plugins/glm
 resolved token source: zshrc:ANTHROPIC_GLM_AUTH_TOKEN (set tail=xxxxxx sha256=...)
 ```
 
+## OAuth Safety
+
+The plugin does not log out Claude.ai, delete keychain items, or modify global auth state. GLM auth is injected only into the child `claude` process created for a `/glm:run` job.
+
+If official Claude Code looks logged out after using provider-specific API keys, check whether your shell has global Anthropic env vars set:
+
+```sh
+env | grep '^ANTHROPIC_'
+```
+
+`ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, or `ANTHROPIC_BASE_URL` can mask Claude.ai OAuth because the CLI gives env auth precedence. To verify your OAuth session is still present:
+
+```sh
+env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL claude auth status
+```
+
+For day-to-day official Claude Code usage, keep plain `claude` free of global `ANTHROPIC_*` provider variables and use provider wrapper functions or this plugin for GLM.
+
 For detached jobs that return a job id immediately:
 
 ```text
