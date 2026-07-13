@@ -237,7 +237,7 @@ function buildClaudeArgs(task, write) {
     "--allowed-tools",
     ...tools,
     "--permission-mode",
-    write ? "bypassPermissions" : "default",
+    write ? "auto" : "default",
     "--output-format",
     "stream-json",
     "--verbose",
@@ -500,7 +500,7 @@ function handleSetup() {
   process.stdout.write(`zshrc ANTHROPIC_GLM_AUTH_TOKEN: ${tokenLabel(zshEnv.authTokenRaw)}\n`);
   process.stdout.write(`zshrc GLM_API_KEY: ${tokenLabel(zshEnv.apiKeyRaw)}\n`);
   process.stdout.write(`model:  ${process.env.GLM_SCALE_MODEL || DEFAULT_MODEL}\n`);
-  process.stdout.write(`default permissions: write + bypassPermissions\n`);
+  process.stdout.write(`default permissions: write + auto\n`);
   process.stdout.write(`ANTHROPIC_API_KEY in parent env: ${process.env.ANTHROPIC_API_KEY ? "set (replaced with GLM token for bare child)" : "not set"}\n`);
   process.stdout.write(`child auth isolation: --bare + GLM ANTHROPIC_API_KEY/ANTHROPIC_AUTH_TOKEN\n`);
   process.stdout.write(`jobs:   ${STATE_DIR}\n`);
@@ -521,7 +521,7 @@ Environment is loaded from the current process, then ~/.zshrc fallback:
   ANTHROPIC_GLM_AUTH_TOKEN or GLM_API_KEY
 
 Default permissions:
-  Full write access with --permission-mode bypassPermissions.
+  Full write access with --permission-mode auto.
   Pass --read-only to restrict to Read/Grep/Glob/Bash(git:*).
 
 Compatibility:

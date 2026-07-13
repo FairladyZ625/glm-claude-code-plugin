@@ -57,7 +57,7 @@ claude --plugin-dir /Users/lizeyu/Projects/glm-claude-code-plugin/plugins/glm
 
 `/glm:run` defaults to Claude Code Bash background mode. The Bash task stays alive until GLM finishes, so Claude Code can notify the conversation when the delegated work completes.
 
-`/glm:run` also defaults to full write access: the child Claude process runs with `--permission-mode bypassPermissions` and the `Read`, `Grep`, `Glob`, `Edit`, `Write`, and `Bash` tools. Use `--read-only` when you want to restrict a task to `Read`, `Grep`, `Glob`, and `Bash(git:*)`.
+`/glm:run` also defaults to full write access: the child Claude process runs with `--permission-mode auto` and the `Read`, `Grep`, `Glob`, `Edit`, `Write`, and `Bash` tools. Use `--read-only` when you want to restrict a task to `Read`, `Grep`, `Glob`, and `Bash(git:*)`.
 
 `/glm:setup` prints the resolved token source plus a redacted tail and short sha256 fingerprint. Use it to diagnose 401s without exposing secrets:
 
